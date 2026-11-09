@@ -19,7 +19,24 @@ namespace AzureBlobProject.Services
                 ContentType = file.ContentType
             };
 
-            var result = await blobClient.UploadAsync(file.OpenReadStream(), httpHeaders);
+            IDictionary<string, string> metaData = new Dictionary<string, string>();
+            if(!string.IsNullOrEmpty(blobModel.Title))
+            {
+                metaData.Add("title", blobModel.Title);
+            }
+            if(!string.IsNullOrEmpty(blobModel.Comment))
+            {
+                metaData.Add("comment", blobModel.Comment);
+            }
+
+            var result = await blobClient.UploadAsync(file.OpenReadStream(), httpHeaders, metaData);
+            
+            //IDictionary<string, string> removeMetaData = new Dictionary<string, string>();
+            //await blobClient.SetMetadataAsync(removeMetaData);
+
+            //metaData.Remove("title");
+            //await blobClient.SetMetadataAsync(metaData);
+
             return result != null;
         }
 
