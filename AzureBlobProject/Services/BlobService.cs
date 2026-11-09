@@ -1,4 +1,7 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
+using Azure.Storage.Sas;
 using AzureBlobProject.Models;
 
 namespace AzureBlobProject.Services
@@ -64,7 +67,62 @@ namespace AzureBlobProject.Services
 
         public async Task<List<BlobModel>> GetAllBlobsWithUri(string containerName)
         {
-            throw new NotImplementedException();
+            BlobContainerClient blobContainerClient = _blobClient.GetBlobContainerClient(containerName);
+            var blobs = blobContainerClient.GetBlobsAsync();
+
+            List<BlobModel> blobList = new List<BlobModel>();
+            string sasContainerSignature = "";
+
+            if (blobContainerClient.CanGenerateSasUri)
+            {
+                BlobSasBuilder sasBuilder = new()
+                {
+                    BlobContainerName = blobContainerClient.Name,
+                    Resource = "c",
+                    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
+                };
+
+                sasBuilder.SetPermissions(BlobSasPermissions.Read);
+                sasContainerSignature = blobContainerClient.GenerateSasUri(sasBuilder).AbsoluteUri.Split('?')[1].ToString();
+            }
+
+            await foreach (var blob in blobs)
+            {
+                var blobClient = blobContainerClient.GetBlobClient(blob.Name);
+                BlobModel   blobModel = new BlobModel
+                {
+                    Uri = blobClient.Uri.AbsoluteUri + "?" + sasContainerSignature
+                };
+
+                //if(blobClient.CanGenerateSasUri)
+                //{
+                //    BlobSasBuilder sasBuilder = new()
+                //    {
+                //        BlobContainerName = blobClient.GetParentBlobContainerClient().Name,
+                //        BlobName = blobClient.Name,
+                //        Resource = "b",
+                //        ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
+                //    };
+
+                //    sasBuilder.SetPermissions(BlobSasPermissions.Read);
+                //    blobModel.Uri = blobClient.GenerateSasUri(sasBuilder).AbsoluteUri;
+                //}
+
+                BlobProperties properties = await blobClient.GetPropertiesAsync();
+
+                if(properties.Metadata.ContainsKey("title"))
+                {
+                    blobModel.Title = properties.Metadata["title"];
+                }
+                if(properties.Metadata.ContainsKey("comment"))
+                {
+                    blobModel.Comment = properties.Metadata["comment"];
+                }
+
+                blobList.Add(blobModel);
+            }
+
+            return blobList;
         }
 
         public async Task<string> GetBlob(string name, string containerName)
