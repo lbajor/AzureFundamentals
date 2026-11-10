@@ -1,5 +1,6 @@
 using AzureFunctionTangyWeb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace AzureFunctionTangyWeb.Controllers
@@ -7,17 +8,34 @@ namespace AzureFunctionTangyWeb.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         public IActionResult Index()
         {
             return View();
         }
-        //http://localhost:7141/api/OnSalesUploadWriteToQueue
+
+        [HttpPost]
+        public async Task<IActionResult> Index(SalesRequest salesRequest)
+        {
+            salesRequest.Id = Guid.NewGuid().ToString();
+            using var httpClient = _httpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri("http://localhost:7141/api/");
+
+            using (var content = new StringContent(JsonConvert.SerializeObject(salesRequest), System.Text.Encoding.UTF8, "application/json"))
+            {
+                HttpResponseMessage response = await httpClient.PostAsync("OnSalesUploadWriteToQueue", content);
+                string responseContent = await response.Content.ReadAsStringAsync();
+            }          
+
+            return RedirectToAction(nameof(Index));
+        }     
 
         public IActionResult Privacy()
         {
