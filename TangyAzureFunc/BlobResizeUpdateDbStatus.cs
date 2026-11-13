@@ -27,7 +27,7 @@ public class BlobResizeUpdateDbStatus
 
         if (salesRequest != null)
         {
-            salesRequest.Status = "Completed";
+            salesRequest.Status = "Image Resized";
             _dbContext.SaveChanges();
         }
 

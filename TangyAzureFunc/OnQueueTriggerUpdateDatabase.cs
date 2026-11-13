@@ -27,7 +27,7 @@ public class OnQueueTriggerUpdateDatabase
         
         if (salesRequest != null)
         {
-            salesRequest.Status = "";
+            salesRequest.Status = "Received";
             _dbContext.SalesRequests.Add(salesRequest);
             _dbContext.SaveChanges();
         }
