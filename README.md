@@ -7,8 +7,20 @@ A set of .NET examples demonstrating Azure Blob Storage and Azure Functions. The
 | Project | Description |
 | --- | --- |
 | `AzureBlobProject` | MVC interface for listing and managing Blob Storage containers and blobs. It supports uploading files with title/comment metadata, viewing and deleting blobs, and creating/deleting containers. Containers created by the app use container-level public blob access; use non-sensitive sample data only. |
-| `AzureFunctionTangyWeb` | MVC sales application form. It submits sales-request details to an HTTP-triggered function and uploads an optional headshot to the `salesrep` blob container. |
-| `TangyAzureFunc` | .NET isolated-worker Azure Functions app. It queues HTTP-submitted sales requests, saves queue messages to SQL Server, and resizes images uploaded to `salesrep` into 100 × 100 JPEGs in `salesrep-resized`. |
+| `AzureFunctionTangyWeb` | MVC application with a sales submission form and a grocery-list interface. Sales requests are submitted to an HTTP-triggered function, with optional headshots uploaded to the `salesrep` blob container. Grocery-list operations call the `TangyAzureFunc` API. |
+| `TangyAzureFunc` | .NET isolated-worker Azure Functions app. It provides grocery-list CRUD endpoints, queues HTTP-submitted sales requests, saves queue messages to SQL Server, and resizes images uploaded to `salesrep` into 100 × 100 JPEGs in `salesrep-resized`. |
+
+## Grocery API
+
+The Functions app exposes a grocery-list API at `http://localhost:7141/api/GroceryList` when run with the included launch profile. All endpoints use `AuthorizationLevel.Function` and require a Function key. The MVC grocery client currently does not send a Function key, so configure key forwarding in the client before using the integrated grocery UI.
+
+| Method | Route | Description |
+| --- | --- | --- |
+| `GET` | `/api/GroceryList` | Get all grocery items. |
+| `GET` | `/api/GroceryList/{id}` | Get an item by ID. |
+| `POST` | `/api/GroceryList` | Create an item. Send a JSON body such as `{"name":"Milk"}`. |
+| `PUT` | `/api/GroceryList/{id}` | Update an item's name. Send a JSON body such as `{"name":"Oat milk"}`. |
+| `DELETE` | `/api/GroceryList/{id}` | Delete an item. |
 
 ## Prerequisites
 
@@ -47,7 +59,7 @@ For the Functions app, create `TangyAzureFunc\local.settings.json` locally (this
 }
 ```
 
-Ensure the configured database has the `SalesRequests` table expected by the app before processing queue messages. This repository does not include database migrations or a schema-creation script.
+Ensure the configured database has the `SalesRequests` and `GroceryItems` tables expected by the app before processing queue messages or using the grocery API. This repository does not include database migrations or a schema-creation script.
 
 `AzureFunctionTangyWeb` currently posts to `http://localhost:7141/api/OnSalesUploadWriteToQueue`. The Functions app's launch profile uses port `7141`; keep the function endpoint and web-app configuration in sync if you change the port or deploy the apps.
 
