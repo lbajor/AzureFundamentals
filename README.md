@@ -1,6 +1,6 @@
 # Azure Fundamentals
 
-A set of .NET examples demonstrating Azure Blob Storage and Azure Functions. The solution contains two ASP.NET Core MVC applications and one .NET isolated-worker Azure Functions app.
+A set of .NET examples demonstrating Azure Blob Storage, Azure Logic Apps, and Azure Functions. The solution contains three ASP.NET Core MVC applications and one .NET isolated-worker Azure Functions app.
 
 ## Projects
 
@@ -8,6 +8,7 @@ A set of .NET examples demonstrating Azure Blob Storage and Azure Functions. The
 | --- | --- |
 | `AzureBlobProject` | MVC interface for listing and managing Blob Storage containers and blobs. It supports uploading files with title/comment metadata, viewing and deleting blobs, and creating/deleting containers. Containers created by the app use container-level public blob access; use non-sensitive sample data only. |
 | `AzureFunctionTangyWeb` | MVC application with a sales submission form and a grocery-list interface. Sales requests are submitted to an HTTP-triggered function, with optional headshots uploaded to the `salesrep` blob container. Grocery-list operations call the `TangyAzureFunc` API. |
+| `AzureSpookyLogic` | MVC application that submits name, email, and phone details to an HTTP-triggered Azure Logic Apps workflow. An optional headshot is uploaded to the `logic-app-holder` Blob Storage container. |
 | `TangyAzureFunc` | .NET isolated-worker Azure Functions app. It provides grocery-list CRUD endpoints, queues HTTP-submitted sales requests, saves queue messages to SQL Server, and resizes images uploaded to `salesrep` into 100 × 100 JPEGs in `salesrep-resized`. |
 
 ## Grocery API
@@ -37,6 +38,8 @@ Do not commit credentials or connection strings. Supply the following settings u
 | --- | --- | --- |
 | `AzureBlobProject` | `BlobConnection` | Connection string for the Blob Storage account used by the blob-management app. |
 | `AzureFunctionTangyWeb` | `StorageConnection` | Connection string for the account containing the `salesrep` container. |
+| `AzureSpookyLogic` | `StorageConnection` | Connection string for the account containing the `logic-app-holder` container. |
+| `AzureSpookyLogic` | `LogicAppUrl` | Signed HTTP trigger URL for the Logic Apps workflow. Keep this value in the ignored local `AzureSpookyLogic\appsettings.Development.local.json`; do not commit it. |
 | `TangyAzureFunc` | `AzureWebJobsStorage` | Storage connection used by the Functions host and Blob/Queue triggers. Use `UseDevelopmentStorage=true` when using a compatible local emulator. |
 | `TangyAzureFunc` | `AzureSqlDatabase` | SQL Server connection string used by Entity Framework Core. |
 
@@ -58,6 +61,8 @@ For the Functions app, create `TangyAzureFunc\local.settings.json` locally (this
   }
 }
 ```
+
+`AzureSpookyLogic` loads `LogicAppUrl` from `AzureSpookyLogic\appsettings.Development.local.json` in Development. Create this local-only file with the signed HTTP trigger URL; it is ignored by Git, so do not commit the URL.
 
 Ensure the configured database has the `SalesRequests` and `GroceryItems` tables expected by the app before processing queue messages or using the grocery API. This repository does not include database migrations or a schema-creation script.
 
@@ -90,7 +95,15 @@ Start the sales web app in a third terminal:
 dotnet run --project .\AzureFunctionTangyWeb\AzureFunctionTangyWeb.csproj
 ```
 
-Open the URL printed by the web app. Its launch profile uses `http://localhost:5026` and `https://localhost:7186`.
+Start the Logic Apps web app in another terminal:
+
+```powershell
+dotnet run --project .\AzureSpookyLogic\AzureSpookyLogic.csproj
+```
+
+Open the URL printed by the web app. The sales app launch profile uses `http://localhost:5026` and `https://localhost:7186`. The Logic Apps app uses `http://localhost:5112` and `https://localhost:7203`.
+
+`AzureSpookyLogic` posts submitted requests to the HTTP-triggered Logic Apps workflow URL configured by `LogicAppUrl` in `AzureSpookyLogic\appsettings.json`. This file is ignored by Git; keep the signed URL private and do not commit it. Configure the workflow before submitting the form. To upload an optional headshot, configure `StorageConnection` and ensure the `logic-app-holder` container exists in that storage account.
 
 ## Build
 
