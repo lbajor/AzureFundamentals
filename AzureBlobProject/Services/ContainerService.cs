@@ -47,7 +47,17 @@ namespace AzureBlobProject.Services
 
                 await foreach (BlobItem blobItem in blobContainerClient.GetBlobsAsync())
                 {
-                    containerAndBlobName.Add("->" + blobItem.Name);
+                    //get metadata of blob
+                    var blobClient = blobContainerClient.GetBlobClient(blobItem.Name);
+                    BlobProperties blobProperties = await blobClient.GetPropertiesAsync();
+                    string blobName = blobItem.Name;
+
+                    if(blobProperties.Metadata.ContainsKey("title"))
+                    {                         
+                        blobName += " (Title: " + blobProperties.Metadata["title"] + ")";
+                    }   
+
+                    containerAndBlobName.Add("->" + blobName);
                 }
                 containerAndBlobName.Add("-------------------------------------------------------------------");
             }

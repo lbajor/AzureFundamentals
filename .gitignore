@@ -27,3 +27,8 @@ appsettings.*.local.json
 secrets.json
 *.pfx
 *.pem
+/AzureFunctionTangyWeb/appsettings.json
+/AzureFunctionTangyWeb/appsettings.json
+/AzureFunctionTangyWeb/appsettings.json
+/AzureFunctionTangyWeb/Properties/launchSettings.json
+/AzureBlobProject/appsettings.json
